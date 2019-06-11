@@ -79,11 +79,16 @@ namespace ColourEnumeratorCore
             return $"#{brandColourToCheck.R:X2}{brandColourToCheck.G:X2}{brandColourToCheck.B:X2}";
         }
 
+        /// <summary>
+        /// Returns secondary BG colour (Item1) and contrast/text colour (Item2)
+        /// </summary>
+        /// <param name="c">Brand colour</param>
+        /// <returns>Tuple of 2 colours</returns>
         public static Tuple<RgbColour, RgbColour> GetSecondaryNavFromBrandColour(RgbColour c)
         {
             var secondaryColour = ScreenColours(c, GetRgbFromHls(AdjustLightness(Black, 0.3)));
             var textColour = new RgbColour(0x38, 0x38, 0x38);
-            var secondaryContrastColour = ContrastColours(secondaryColour, textColour, GetRgbFromHls(White), 0.5);
+            var secondaryContrastColour = ContrastColours2(secondaryColour, textColour, GetRgbFromHls(White));
             return new Tuple<RgbColour, RgbColour>(secondaryColour, secondaryContrastColour);
         }
 
@@ -92,6 +97,7 @@ namespace ColourEnumeratorCore
             return (!isLargeOrBold) ? contrastRatio >= 4.5 : contrastRatio >= 3;
         }
 
+        [Obsolete("This is broken (doesn't do sRGB gamma correction), use the other Method.")]
         private static RgbColour ContrastColours(RgbColour colour, RgbColour dark, RgbColour light, double bias)
         {
             double relativeLumaColour = GetRelativeLuminance(colour);
@@ -111,6 +117,13 @@ namespace ColourEnumeratorCore
             }
 
             return dark;
+        }
+        
+        private static RgbColour ContrastColours2(RgbColour colour, RgbColour dark, RgbColour light)
+        {
+            var ratioForLightOnColour = GetContrastRatio(colour, light);
+            var ratioForDarkOnColour = GetContrastRatio(colour, dark);
+            return ratioForDarkOnColour >= ratioForLightOnColour ? dark : light;
         }
 
         public static double GetRelativeLuminance(RgbColour c)

@@ -8,6 +8,28 @@ namespace ColourEnumeratorCore
     public class ProgramTests
     {
         [Test]
+        public void TestSbTwo8861CommentFromSara()
+        {
+            var brandColour = new RgbColour(0x2E, 0xAF, 0xDF);
+            var secondaryColourExpected = new RgbColour(0x6D, 0xC7, 0xE9);
+            var computed = GetSecondaryNavFromBrandColour(brandColour);
+            
+            computed.Item1.R.ShouldBe(secondaryColourExpected.R);
+            computed.Item1.G.ShouldBe(secondaryColourExpected.G);
+            computed.Item1.B.ShouldBe(secondaryColourExpected.B);
+
+            var matchesCodepenBehaviour =
+                computed.Item2.R == 255 &&
+                computed.Item2.G == 255 &&
+                computed.Item2.B == 255;
+            
+            matchesCodepenBehaviour.ShouldBeFalse();
+            
+            computed.Item2.R.ShouldBe(computed.Item2.G);
+            computed.Item2.B.ShouldBe(computed.Item2.G);
+        }
+
+        [Test]
         public void CheckRelativeLuminance()
         {
             GetRelativeLuminance(0xfa, 0x70, 0x14).ShouldBe(0.3196, 0.01);
@@ -40,12 +62,12 @@ namespace ColourEnumeratorCore
             secondaryRgbColour.B.ShouldBe((byte)0xb4);
 
             var textColour = tuple.Item2;
-            textColour.R.ShouldBe((byte)255);
-            textColour.G.ShouldBe((byte)255);
-            textColour.B.ShouldBe((byte)255);
+            textColour.R.ShouldBe((byte)0x38);
+            textColour.G.ShouldBe((byte)0x38);
+            textColour.B.ShouldBe((byte)0x38);
 
             var contrast = GetContrastRatio(secondaryRgbColour, textColour);
-            contrast.ShouldBe(3.4097, 0.01);
+            contrast.ShouldBe(3.4362, 0.01);
             
             PassesAA(contrast, isLargeOrBold: false).ShouldBe(false);
             PassesAA(contrast, isLargeOrBold: true).ShouldBe(true); // size >= 18pt or size >= 15 pt & bold
