@@ -13,4 +13,11 @@
       <PackageReference Include="Shouldly" Version="4.0.0-beta0001" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="brand.csv" />
+      <EmbeddedResource Include="brand.csv">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </EmbeddedResource>
+    </ItemGroup>
+
 </Project>

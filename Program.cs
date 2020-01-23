@@ -25,6 +25,11 @@ namespace ColourEnumeratorCore
             public byte G => g;
 
             public byte B => b;
+
+            public override string ToString()
+            {
+                return "#"+r.ToString("X2") + g.ToString("X2") + b.ToString("X2");
+            }
         }
 
         public struct HslColour
@@ -87,8 +92,9 @@ namespace ColourEnumeratorCore
         public static Tuple<RgbColour, RgbColour> GetSecondaryNavFromBrandColour(RgbColour c)
         {
             var secondaryColour = ScreenColours(c, GetRgbFromHls(AdjustLightness(Black, 0.3)));
-            var textColour = new RgbColour(0x38, 0x38, 0x38);
-            var secondaryContrastColour = ContrastColours2(secondaryColour, textColour, GetRgbFromHls(White));
+            //var textColour = new RgbColour(0x38, 0x38, 0x38);
+            var textColour = new RgbColour(0, 0, 0);
+            var secondaryContrastColour = ContrastColours(secondaryColour, textColour, GetRgbFromHls(White), 0.5);
             return new Tuple<RgbColour, RgbColour>(secondaryColour, secondaryContrastColour);
         }
 

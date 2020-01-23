@@ -1,4 +1,8 @@
 using System;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using Shouldly;
 using static ColourEnumeratorCore.Program;
@@ -115,6 +119,16 @@ namespace ColourEnumeratorCore
         }
 
         [Test]
+        public void ExampleBadColour()
+        {
+            var c1 = new RgbColour(0x02, 0x63, 0x7D);
+            var secondaryColours = GetSecondaryNavFromBrandColour(c1);
+            Console.WriteLine(PrintColour(c1));
+            Console.WriteLine(PrintColour(secondaryColours.Item1));
+            Console.WriteLine(PrintColour(secondaryColours.Item2));
+        }
+
+        [Test]
         public void TestAllPossibleColours()
         {
             for (byte r = 0; r <= 254; r++)
@@ -138,5 +152,51 @@ namespace ColourEnumeratorCore
                 }
             }
         }
+
+        [Test]
+        public void TestExistingSitesFromJsonImport()
+        {
+            var file = "brand.csv";
+            var csvLines = File.ReadAllLines(file).ToList();
+            var jsonSerializer = JsonSerializer.Create(new JsonSerializerSettings
+            {
+              MissingMemberHandling  = MissingMemberHandling.Ignore
+            });
+
+            var results = csvLines.Skip(1).Select(line =>
+            {
+                var indexOfFirstComma = line.IndexOf(",", StringComparison.Ordinal);
+                var json = line.Substring(indexOfFirstComma + 2).TrimEnd('"').Replace("\"\"", "\"");
+                var site = line.Substring(0, indexOfFirstComma).Trim('"');
+                var jsonReader = new JsonTextReader(new StringReader(json));
+                var settings = jsonSerializer.Deserialize<SitebuilderSiteSettings>(jsonReader);
+                if (!string.IsNullOrWhiteSpace(settings.BrandColour))
+                {
+                    settings.BrandColour = settings.BrandColour.TrimStart('#');
+                    var r = byte.Parse(settings.BrandColour.Substring(0, 2), NumberStyles.HexNumber);
+                    var g = byte.Parse(settings.BrandColour.Substring(2, 2), NumberStyles.HexNumber);
+                    var b = byte.Parse(settings.BrandColour.Substring(4, 2), NumberStyles.HexNumber);
+                    
+                    var brandColourToCheck = new RgbColour(r, g, b);
+                    var secondary = GetSecondaryNavFromBrandColour(brandColourToCheck);
+
+                    var contrastRatio = GetContrastRatio(secondary.Item1, secondary.Item2);
+                    //Console.WriteLine(site+"\t#"+settings.BrandColour.ToUpper()+"\t"+secondary.Item1+"\t"+secondary.Item2+"\t"+contrastRatio);
+                    return new Tuple<string, bool>(site, PassesAA(contrastRatio, false));
+                }
+                return null;
+            }).Where( t => t != null).Where(r => !r.Item2).ToList();
+            
+            foreach (var result in results)
+            {
+                Console.WriteLine($"{result.Item1} = {(result.Item2 ? "true" : "false")}");
+            }
+        }
+    }
+
+    class SitebuilderSiteSettings
+    {
+        [JsonProperty("brandColour")]
+        public string BrandColour { get; set; }
     }
 }
